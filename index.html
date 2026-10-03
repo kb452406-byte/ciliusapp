@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4c6b48">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Cílios Liss</title>
+<style>
+:root{--g:#7a9678;--gd:#4c6b48;--bg:#f4f6f3;--c:#fff;--tx:#2b2b2b;--m:#80897d;--b:#e6e9e4}
+@media(prefers-color-scheme:dark){:root{--bg:#141813;--c:#1f251e;--tx:#eaeee8;--m:#9aa597;--b:#2f372d;--gd:#a9c8a5}}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);padding:env(safe-area-inset-top) 0 calc(68px + env(safe-area-inset-bottom))}
+header{padding:18px 16px 4px}h1{font:600 22px Georgia,serif;margin:0;color:var(--gd)}
+main{padding:8px 14px}.tab{display:none}.tab.on{display:block}
+.card{background:var(--c);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 1px 3px #0001}
+label{display:block;font-size:12px;color:var(--m);margin:10px 0 4px}
+input,select{width:100%;padding:11px;border:1px solid var(--b);border-radius:10px;font-size:16px;background:var(--bg);color:var(--tx)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+button{font:inherit;border:0;border-radius:10px;padding:12px;background:var(--g);color:#fff;width:100%;margin-top:10px;font-weight:600}
+button.s{background:var(--b);color:var(--gd)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.box{background:var(--bg);border-radius:10px;padding:10px;text-align:center}.box small{display:block;font-size:11px;color:var(--m)}.box b{font-size:16px;color:var(--gd)}
+.it{display:flex;justify-content:space-between;gap:8px;padding:10px 4px;border-bottom:1px solid var(--b);font-size:14px}
+.it small{display:block;color:var(--m);font-size:12px}.it b{white-space:nowrap}
+details{border-bottom:1px solid var(--b)}summary{display:flex;justify-content:space-between;padding:12px 4px;font-weight:600;cursor:pointer;list-style:none}
+details .it{padding-left:14px}.hint{font-size:12px;color:var(--m);line-height:1.5}.err{color:#b04a4a;font-size:13px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--c);border-top:1px solid var(--b);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav a{flex:1;text-align:center;font-size:11px;color:var(--m);padding:4px 0}nav a span{display:block;font-size:20px}nav a.on{color:var(--gd);font-weight:700}
+</style>
+</head>
+<body>
+<header><h1>🌿 Cílios Liss</h1><div class="hint" id="status">Controle de ganhos</div></header>
+<main>
+ <div class="card" id="auth" style="display:none"><div class="hint" id="authMsg"></div><button id="connect">Conectar com Google</button></div>
+
+ <section class="tab on" id="t-resumo">
+  <div class="row"><div><label>Ano</label><select id="ano"></select></div><div><label>Mês</label><select id="mes"></select></div></div>
+  <div class="grid" id="tot"></div>
+  <div class="card" id="lista"></div>
+  <button class="s" id="reload">↻ Atualizar da planilha</button>
+ </section>
+
+ <section class="tab" id="t-agenda">
+  <div class="card">
+   <div class="row"><div><label>De</label><input type="date" id="ag1"></div><div><label>Até</label><input type="date" id="ag2"></div></div>
+   <label>Filtro (cliente ou palavra)</label><input id="agF" placeholder="Ex: Maria, pago">
+   <button id="agBtn">Buscar na Agenda</button>
+  </div>
+  <div class="card" id="agRes"><p class="hint">Escolha o período e toque em Buscar.</p></div>
+ </section>
+
+ <section class="tab" id="t-busca">
+  <div class="card"><label>Cliente, procedimento, modelo ou pagamento</label><input id="q" placeholder="Ex: Maria, Russo, Pix">
+  <label>Ano (opcional)</label><select id="qAno"></select></div>
+  <div class="card" id="qRes"><p class="hint">Digite para buscar na planilha.</p></div>
+ </section>
+
+ <section class="tab" id="t-calc">
+  <div class="card"><label>Valor (R$)</label><input id="cV" inputmode="decimal" placeholder="90,00">
+  <label>Data do atendimento</label><input type="date" id="cD">
+  <div class="grid" id="cRes"></div><p class="hint">Até 2025: atendente 20%. De 2026 em diante: 10%. O resto é dividido 50/50 entre dona e empresa.</p></div>
+ </section>
+
+ <section class="tab" id="t-cfg">
+  <div class="card">
+   <label>Client ID (Google Cloud)</label><input id="cfgCid" placeholder="xxxx.apps.googleusercontent.com">
+   <label>ID da planilha</label><input id="cfgSid">
+   <label>Intervalo (aba!A1:K2000)</label><input id="cfgRng" placeholder="Página1!A1:K2000">
+   <label>ID da agenda</label><input id="cfgCal" placeholder="primary">
+   <button id="cfgSave">Salvar</button><p class="hint" id="cfgMsg"></p>
+   <p class="hint">Origem autorizada no Google Cloud: <b id="origin"></b></p>
+   <button class="s" id="logout">Sair da conta</button>
+  </div>
+ </section>
+</main>
+<nav>
+ <a data-t="resumo" class="on"><span>📊</span>Resumo</a><a data-t="agenda"><span>📅</span>Agenda</a>
+ <a data-t="busca"><span>🔎</span>Busca</a><a data-t="calc"><span>🧮</span>Calcular</a><a data-t="cfg"><span>⚙️</span>Config</a>
+</nav>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+const $=s=>document.querySelector(s);
+const NOMES={atendente:"Sarah",dona:"Zama",empresa:"CíliosLiss"}; // nomes das colunas da planilha
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const SCOPES="https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/calendar.readonly";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const brl=n=>(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const p2=n=>String(n).padStart(2,"0");
+const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const cfg=()=>JSON.parse(localStorage.getItem("cfg")||"{}");
+let R=[],tk=null,tkClient=null;
+
+function parseBRL(v){if(typeof v==="number")return v;
+ const s=String(v??"").replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",",".");
+ const n=parseFloat(s);return isNaN(n)?0:n}
+function split(valor,ano){const a=ano>=2026?.10:.20,r=(1-a)/2;return{at:valor*a,dn:valor*r,em:valor*r}}
+function parseDate(s){s=String(s||"").trim();let m;
+ if(m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/)){let y=+m[3];if(y<100)y+=2000;return{y,m:+m[2],d:+m[1]}}
+ if(m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))return{y:+m[1],m:+m[2],d:+m[3]};return null}
+
+/* ---------- Auth (Google Identity Services) ---------- */
+function saveTk(t,exp){tk=t;localStorage.setItem("tk",JSON.stringify({t,exp}))}
+function getToken(){return new Promise((ok,no)=>{
+ if(tk&&JSON.parse(localStorage.getItem("tk")||"{}").exp>Date.now())return ok(tk);
+ const c=cfg();if(!c.cid)return no(new Error("Preencha o Client ID em Config."));
+ if(!window.google?.accounts)return no(new Error("Google ainda carregando. Tente de novo."));
+ tkClient=google.accounts.oauth2.initTokenClient({client_id:c.cid,scope:SCOPES,
+  callback:r=>r.error?no(new Error(r.error)):(saveTk(r.access_token,Date.now()+(r.expires_in-60)*1000),ok(tk)),
+  error_callback:e=>no(new Error(e.type||"Login cancelado"))});
+ tkClient.requestAccessToken({prompt:""})})}
+async function api(url){const t=await getToken();const r=await fetch(url,{headers:{Authorization:"Bearer "+t}});
+ if(r.status===401){localStorage.removeItem("tk");tk=null;throw new Error("Sessão expirada. Toque em Conectar.")}
+ if(!r.ok)throw new Error(`Erro ${r.status}: ${(await r.text()).slice(0,160)}`);return r.json()}
+function needAuth(msg){$("#auth").style.display="block";$("#authMsg").textContent=msg}
+
+/* ---------- Planilha ---------- */
+function fixRange(r){const i=r.lastIndexOf("!");if(i<0)return r;
+ let n=r.slice(0,i).trim().replace(/^['"‘’“”]+|['"‘’“”]+$/g,"");return(/[^\w]/.test(n)?`'${n}'`:n)+"!"+r.slice(i+1).trim()}
+function toRecords(values){if(!values.length)return[];
+ const h=values[0].map(norm);
+ return values.slice(1).map(row=>{const o={};h.forEach((k,i)=>o[k]=row[i]??"");
+  const dt=parseDate(o.data);const ano=dt?dt.y:parseInt(o.ano)||null;
+  let mes=dt?dt.m:(MESES.findIndex(m=>norm(m)===norm(o.mes))+1)||parseInt(o.mes)||null;
+  const valor=parseBRL(o.valor);
+  let at=parseBRL(o[norm(NOMES.atendente)]),dn=parseBRL(o[norm(NOMES.dona)]),em=parseBRL(o[norm(NOMES.empresa)]);
+  if(!at&&!dn&&!em&&valor&&ano)({at,dn,em}=split(valor,ano));
+  return{ano,mes,dia:dt?dt.d:null,cliente:String(o.cliente||"").trim(),proc:o.procedimento||"",modelo:o.modelo||"",pag:o["forma de pagamento"]||"",valor,at,dn,em}
+ }).filter(r=>r.ano&&(r.valor||r.at||r.dn||r.em))}
+async function loadSheet(){const c=cfg();
+ if(!c.sid||!c.rng)return needAuth("Preencha planilha e intervalo em Config.");
+ $("#status").textContent="Atualizando…";
+ const d=await api(`https://sheets.googleapis.com/v4/spreadsheets/${c.sid}/values/${encodeURIComponent(fixRange(c.rng))}?valueRenderOption=FORMATTED_VALUE`);
+ localStorage.setItem("cache",JSON.stringify(d.values||[]));setData(d.values||[]);
+ $("#status").textContent="Atualizado às "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function setData(v){R=toRecords(v);fillAnos();renderResumo()}
+
+/* ---------- Resumo: ano → mês → dia ---------- */
+function sum(rs){const t={valor:0,at:0,dn:0,em:0,n:rs.length,cl:new Set()};
+ rs.forEach(r=>{t.valor+=r.valor;t.at+=r.at;t.dn+=r.dn;t.em+=r.em;if(r.cliente)t.cl.add(norm(r.cliente))});return t}
+function fillAnos(){const anos=[...new Set(R.map(r=>r.ano))].sort((a,b)=>b-a);
+ const cur=$("#ano").value;const opts=anos.map(a=>`<option>${a}</option>`).join("");
+ $("#ano").innerHTML=opts;$("#qAno").innerHTML='<option value="">Todos</option>'+opts;
+ if(anos.includes(+cur))$("#ano").value=cur;fillMeses()}
+function fillMeses(){const a=+$("#ano").value,cur=$("#mes").value;
+ const ms=[...new Set(R.filter(r=>r.ano===a&&r.mes).map(r=>r.mes))].sort((x,y)=>x-y);
+ $("#mes").innerHTML='<option value="">Ano inteiro</option>'+ms.map(m=>`<option value="${m}">${MESES[m-1]}</option>`).join("");
+ if(ms.includes(+cur))$("#mes").value=cur}
+function recLine(r){return`<div class="it"><div>${esc(r.cliente||"—")}<small>${esc([r.proc,r.modelo,r.pag].filter(Boolean).join(" • "))}</small></div><b>${brl(r.valor)}</b></div>`}
+function renderResumo(){const a=+$("#ano").value,m=+$("#mes").value||0;
+ const rs=R.filter(r=>r.ano===a&&(!m||r.mes===m)),t=sum(rs);
+ $("#tot").innerHTML=[["Faturamento",brl(t.valor)],["Atendimentos",t.n],[NOMES.atendente,brl(t.at)],[NOMES.dona,brl(t.dn)],[NOMES.empresa,brl(t.em)],["Clientes",t.cl.size]]
+  .map(([l,v])=>`<div class="box"><small>${esc(l)}</small><b>${esc(v)}</b></div>`).join("");
+ if(!rs.length){$("#lista").innerHTML='<p class="hint">Sem dados neste período.</p>';return}
+ const g=new Map();rs.forEach(r=>{const k=m?(r.dia||0):(r.mes||0);(g.get(k)||g.set(k,[]).get(k)).push(r)});
+ const keys=[...g.keys()].sort((x,y)=>y-x);
+ $("#lista").innerHTML=`<div class="hint">${m?"Por dia":"Por mês"} — toque para ${m?"ver os atendimentos":"abrir o mês"}</div>`+keys.map(k=>{
+  const x=g.get(k),s=sum(x);
+  if(!m)return`<div class="it" data-m="${k}" style="cursor:pointer"><div><b>${MESES[k-1]||"Sem mês"}</b><small>${s.n} atendimentos • ${esc(NOMES.atendente)} ${brl(s.at)}</small></div><b>${brl(s.valor)}</b></div>`;
+  const wd=k?new Date(a,m-1,k).toLocaleDateString("pt-BR",{weekday:"short"}):"";
+  return`<details><summary><span>${k?`${p2(k)}/${p2(m)} <small class="hint">${wd}</small>`:"Sem dia"}</span><span>${brl(s.valor)}</span></summary>${x.map(recLine).join("")}</details>`}).join("")}
+$("#lista").addEventListener("click",e=>{const d=e.target.closest("[data-m]");if(d){$("#mes").value=d.dataset.m;renderResumo()}});
+$("#ano").onchange=()=>{fillMeses();renderResumo()};$("#mes").onchange=renderResumo;
+$("#reload").onclick=()=>loadSheet().catch(e=>needAuth(e.message));
+
+/* ---------- Busca ---------- */
+function renderBusca(){const q=norm($("#q").value),a=+$("#qAno").value||0;
+ if(!q&&!a){$("#qRes").innerHTML='<p class="hint">Digite para buscar na planilha.</p>';return}
+ const rs=R.filter(r=>(!a||r.ano===a)&&(!q||norm([r.cliente,r.proc,r.modelo,r.pag].join(" ")).includes(q)))
+  .sort((x,y)=>(y.ano-x.ano)||((y.mes||0)-(x.mes||0))||((y.dia||0)-(x.dia||0)));
+ const t=sum(rs);
+ $("#qRes").innerHTML=rs.length?`<div class="hint">${rs.length} resultados • total ${brl(t.valor)}</div>`+rs.slice(0,150).map(r=>
+  `<div class="it"><div>${esc(r.cliente||"—")}<small>${r.dia?p2(r.dia)+"/":""}${r.mes?p2(r.mes)+"/":""}${r.ano} • ${esc([r.proc,r.modelo].filter(Boolean).join(" • "))}</small></div><b>${brl(r.valor)}</b></div>`).join(""):'<p class="hint">Nada encontrado.</p>'}
+$("#q").oninput=renderBusca;$("#qAno").onchange=renderBusca;
+
+/* ---------- Calculadora ---------- */
+function calc(){const v=parseBRL($("#cV").value),d=$("#cD").value,a=d?+d.slice(0,4):new Date().getFullYear(),s=split(v,a);
+ $("#cRes").innerHTML=[[NOMES.atendente,s.at],[NOMES.dona,s.dn],[NOMES.empresa,s.em]].map(([l,x])=>`<div class="box"><small>${esc(l)}</small><b>${brl(x)}</b></div>`).join("")}
+$("#cV").oninput=calc;$("#cD").onchange=calc;
+
+/* ---------- Agenda ---------- */
+function infoEvento(ev){const txt=`${ev.summary||""} ${ev.description||""}`.trim();
+ const m=txt.match(/R\$\s*(\d[\d.]*(?:,\d{1,2})?)/i)||txt.match(/pag[oa]\s*:?\s*(\d[\d.]*(?:,\d{1,2})?)/i)||txt.match(/\b(\d+,\d{2})\b/);
+ const allDay=!ev.start?.dateTime,start=ev.start?(ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date+"T00:00")):null;
+ return{titulo:ev.summary||"(sem título)",txt,valor:m?parseBRL(m[1]):null,cliente:txt.split(/\s[-–—]\s|:/)[0].trim(),start,allDay}}
+$("#agBtn").onclick=async()=>{const el=$("#agRes"),a=$("#ag1").value,b=$("#ag2").value||a;
+ if(!a)return el.innerHTML='<p class="hint">Escolha a data.</p>';
+ el.innerHTML='<p class="hint">Buscando…</p>';
+ try{const p=new URLSearchParams({timeMin:new Date(a+"T00:00:00").toISOString(),timeMax:new Date(b+"T23:59:59").toISOString(),singleEvents:"true",orderBy:"startTime",maxResults:"2500"});
+  const d=await api(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cfg().cal||"primary")}/events?${p}`);
+  const f=norm($("#agF").value);
+  const L=(d.items||[]).filter(e=>e.status!=="cancelled").map(infoEvento).filter(i=>!f||norm(i.txt).includes(f));
+  if(!L.length)return el.innerHTML='<p class="hint">Nenhum evento.</p>';
+  const days=new Map();L.forEach(i=>{const k=iso(i.start);(days.get(k)||days.set(k,[]).get(k)).push(i)});
+  el.innerHTML=[...days].map(([k,ev])=>{const [y,m,dd]=k.split("-").map(Number);
+   const planilha=sum(R.filter(r=>r.ano===y&&r.mes===m&&r.dia===dd)).valor;
+   return`<div class="hint" style="margin-top:12px"><b>${p2(dd)}/${p2(m)}/${y}</b>${planilha?` • planilha: ${brl(planilha)}`:""}</div>`+ev.map(i=>
+    `<div class="it"><div>${esc(i.cliente||i.titulo)}<small>${i.allDay?"dia todo":i.start.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} • ${esc(i.titulo)}</small></div><b>${i.valor?brl(i.valor):""}</b></div>`).join("")}).join("")
+ }catch(e){el.innerHTML=`<p class="err">${esc(e.message)}</p>`}};
+
+/* ---------- Config, abas, boot ---------- */
+document.querySelectorAll("nav a").forEach(a=>a.onclick=()=>{
+ document.querySelectorAll("nav a,.tab").forEach(x=>x.classList.remove("on"));a.classList.add("on");$("#t-"+a.dataset.t).classList.add("on")});
+const c0=cfg();$("#cfgCid").value=c0.cid||"";$("#cfgSid").value=c0.sid||"";$("#cfgRng").value=c0.rng||"Página1!A1:K2000";$("#cfgCal").value=c0.cal||"primary";
+$("#origin").textContent=location.origin;
+$("#cfgSave").onclick=()=>{localStorage.setItem("cfg",JSON.stringify({cid:$("#cfgCid").value.trim(),sid:$("#cfgSid").value.trim(),rng:$("#cfgRng").value.trim(),cal:$("#cfgCal").value.trim()||"primary"}));
+ localStorage.removeItem("tk");tk=null;$("#cfgMsg").textContent="✅ Salvo. Volte ao Resumo e conecte.";needAuth("Configurações salvas. Conecte para carregar os dados.")};
+$("#logout").onclick=()=>{if(tk&&window.google?.accounts)google.accounts.oauth2.revoke(tk);localStorage.removeItem("tk");tk=null;needAuth("Você saiu da conta.")};
+$("#connect").onclick=async()=>{try{await getToken();$("#auth").style.display="none";await loadSheet()}catch(e){needAuth(e.message)}};
+(function boot(){
+ const cache=localStorage.getItem("cache");if(cache){try{setData(JSON.parse(cache));$("#status").textContent="Dados salvos no aparelho"}catch{}}
+ const t=JSON.parse(localStorage.getItem("tk")||"{}");const hoje=iso(new Date());$("#ag1").value=$("#ag2").value=$("#cD").value=hoje;calc();
+ if(t.t&&t.exp>Date.now()){tk=t.t;loadSheet().catch(e=>needAuth(e.message))}
+ else needAuth(cfg().cid?"Toque para conectar sua conta Google.":"Primeiro abra Config e cole o Client ID e a planilha.");
+ if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+})();
+</script>
+</body>
+</html>
